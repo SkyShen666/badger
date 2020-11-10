@@ -58,7 +58,8 @@ func (s *Arena) putNode(height int) uint32 {
 
 	// Pad the allocation with enough bytes to ensure pointer alignment.
 	l := uint32(MaxNodeSize - unusedSize + nodeAlign)
-	n := s.IncrementOffset(int(l))
+	n := s.IncrementOffset(int(l)) - s.StartOffset()
+
 	// Return the aligned offset.
 	m := (uint32(n) - l + uint32(nodeAlign)) & ^uint32(nodeAlign)
 	return m
@@ -70,7 +71,7 @@ func (s *Arena) putNode(height int) uint32 {
 // decoding will incur some overhead.
 func (s *Arena) putVal(v y.ValueStruct) uint32 {
 	l := uint32(v.EncodedSize())
-	m := s.IncrementOffset(int(l))
+	m := s.IncrementOffset(int(l)) - s.StartOffset()
 	buf := s.Bytes()[uint32(m)-l : m]
 	v.Encode(buf)
 	return uint32(m) - l
@@ -79,7 +80,7 @@ func (s *Arena) putVal(v y.ValueStruct) uint32 {
 // putKey puts the key and returns its offset
 func (s *Arena) putKey(key []byte) uint32 {
 	keySz := uint32(len(key))
-	n := s.IncrementOffset(int(keySz))
+	n := s.IncrementOffset(int(keySz)) - s.StartOffset()
 	offset := uint32(n) - keySz
 	buf := s.Bytes()[offset : offset+keySz]
 	y.AssertTrue(len(key) == copy(buf, key))
